@@ -10,7 +10,7 @@ public class ConexionBD {
     private static final String PORT = "5432";
     private static final String DB_NAME = "postgres"; // Por defecto en Supabase
     private static final String USER = "postgres";
-    private static final String PASS = "79/gM:458111";
+    private static final String PASS = "79/GM:458111";
 
     // Construimos la URL JDBC para PostgreSQL
     private static final String URL = "jdbc:postgresql://" + HOST + ":" + PORT + "/" + DB_NAME;
@@ -26,10 +26,10 @@ public class ConexionBD {
             conexion = DriverManager.getConnection(URL, USER, PASS);
             
         } catch (ClassNotFoundException e) {
-            System.err.println("❌ ERROR: No se encontró el Driver JDBC de PostgreSQL.");
+            System.err.println("ERROR: No se encontró el Driver JDBC de PostgreSQL.");
             e.printStackTrace();
         } catch (SQLException e) {
-            System.err.println("❌ ERROR: No se pudo conectar a la base de datos.");
+            System.err.println("ERROR: No se pudo conectar a la base de datos.");
             System.err.println("Mensaje: " + e.getMessage());
         }
         return conexion;
