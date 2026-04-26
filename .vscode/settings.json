@@ -1,6 +1,8 @@
 {
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
-        "c:\\Users\\calav\\Downloads\\postgresql-42.7.10.jar"
-    ]
+        "c:\\Users\\calav\\Downloads\\postgresql-42.7.10.jar",
+        "/Users/guillem/Downloads/postgresql-42.7.10.jar"
+    ],
+    "java.debug.settings.onBuildFailureProceed": true
 }

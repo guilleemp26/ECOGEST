@@ -1,10 +1,14 @@
+package db;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.regex.Pattern;
-
 import model.Movimiento;
+import model.Usuario;
+
+
 
 public class ManageDB {
     private Connection connection;
@@ -36,7 +40,12 @@ public class ManageDB {
     public boolean registrarUsuario(String nombre, String password) 
     {
         if (!validarPassword(password)) {
-            System.out.println("La contraseña no cumple los requisitos de seguridad.");
+            System.out.println("---Contraseña inválida---");
+            System.out.println("- La contraseña debe tener:");
+            System.out.println("- Al menos 8 caracteres");
+            System.out.println("- Una letra mayúscula");
+            System.out.println("- Una letra minúscula");
+            System.out.println("- Al menos un número");
             return false;
         }
 
@@ -45,6 +54,7 @@ public class ManageDB {
             pstmt.setString(1, nombre);
             pstmt.setString(2, password);
             return pstmt.executeUpdate() > 0;
+            
         } catch (SQLException e) {
             System.out.println("Error al registrar: " + e.getMessage());
             return false;
@@ -52,33 +62,43 @@ public class ManageDB {
     }
 
     // 3. Método para Login (Devuelve el ID del usuario si es correcto, o -1 si falla)
-    public int login(String nombre, String password) 
+    public Usuario login(String nombre, String password) 
     {
-        String sql = "SELECT id FROM usuarios WHERE nombre = ? AND password = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        // Buscamos el ID y el nombre (por si acaso)
+        String sql = "SELECT id_usuario, nombre FROM usuarios WHERE nombre = ? AND password = ?";
+        
+        try (Connection conn = ConexionBD.conectar();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
             pstmt.setString(1, nombre);
             pstmt.setString(2, password);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                return rs.getInt("id"); // ¡Éxito! Devolvemos su ID
+                // SI EXISTE: Creamos el objeto y lo devolvemos
+                int id = rs.getInt("id_usuario");
+                String nombreDb = rs.getString("nombre");
+                
+                return new Usuario(id, nombreDb, password); 
             }
         } catch (SQLException e) {
-            System.out.println("Error en login: " + e.getMessage());
+            System.out.println("❌ Error: " + e.getMessage());
         }
-        return -1; // Login fallido
+        
+        // SI NO EXISTE O HAY ERROR: Devolvemos null
+        return null; 
     }
 
     public boolean registrarMovimiento(Movimiento m) 
     {
         // SQL sin columna 'fecha', porque Supabase usará el valor por defecto (CURRENT_DATE)
-        String sql = "INSERT INTO movimientos (id_usuario, concepto, cantidad, categoria) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO movimientos (id_usuario, concepto, cantidad, id_categoria) VALUES (?, ?, ?, ?)";
         
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, m.getIdUsuario());
             pstmt.setString(2, m.getConcepto());
             pstmt.setDouble(3, m.getCantidad());
-            pstmt.setString(4, m.getCategoria());
+            pstmt.setInt(4, m.getId_categoria());
             
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -90,28 +110,32 @@ public class ManageDB {
     //Listar movimientos
     public java.util.List<Movimiento> obtenerMovimientosPorUsuario(int idUsuario) 
     {
-    java.util.List<Movimiento> lista = new java.util.ArrayList<>();
-    String sql = "SELECT * FROM movimientos WHERE id_usuario = ? ORDER BY id DESC";
+        java.util.List<Movimiento> lista = new java.util.ArrayList<>();
+        String sql = "SELECT * FROM movimientos WHERE id_usuario = ? ORDER BY id_movimiento DESC";
 
-    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-        pstmt.setInt(1, idUsuario);
-        ResultSet rs = pstmt.executeQuery();
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, idUsuario);
+            ResultSet rs = pstmt.executeQuery();
 
-        while (rs.next()) {
-            // Creamos el objeto con el constructor de 5 parámetros que hicimos antes
-            Movimiento m = new Movimiento(
-                rs.getInt("id"),
-                rs.getInt("id_usuario"),
-                rs.getString("concepto"),
-                rs.getDouble("cantidad"),
-                rs.getString("categoria")
-            );
-            lista.add(m);
+            while (rs.next()) {
+                // Creamos el objeto con el constructor de 5 parámetros que hicimos antes
+                Movimiento m = new Movimiento(
+                    rs.getInt("id_movimiento"),
+                    rs.getInt("id_usuario"),
+                    rs.getString("concepto"),
+                    rs.getDouble("cantidad"),
+                    rs.getInt("id_categoria")
+                );
+                lista.add(m);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al listar: " + e.getMessage());
         }
-    } catch (SQLException e) {
-        System.out.println("Error al listar: " + e.getMessage());
-    }
-    return lista;
+        for(Movimiento m : lista)
+        {
+            System.out.println(m);
+        }
+        return lista;
     }
 
     //Obtener valance total
@@ -133,7 +157,7 @@ public class ManageDB {
     //Eliminar movimiento
     public boolean eliminarMovimiento(int idMovimiento, int idUsuario) {
         // Importante: Filtramos por idUsuario por seguridad, para que nadie borre gastos ajenos
-        String sql = "DELETE FROM movimientos WHERE id = ? AND id_usuario = ?";
+        String sql = "DELETE FROM movimientos WHERE id_movimiento = ? AND id_usuario = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, idMovimiento);
             pstmt.setInt(2, idUsuario);
