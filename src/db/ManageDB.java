@@ -13,9 +13,8 @@ import model.Usuario;
 public class ManageDB {
     private Connection connection;
 
-    // Tu constructor actual (está perfecto)
-    public ManageDB(Connection connection) 
-    {
+    public ManageDB(Connection connection)
+{
         try {
             if (connection != null && connection.isValid(0)) {
                 this.connection = connection;
@@ -27,18 +26,14 @@ public class ManageDB {
         }
     }
 
-    // --- MÉTODOS DE USUARIO ---
-
-    // 1. Validador Regex (8 caracteres, 1 Mayúscula, 1 Número)
-    public boolean validarPassword(String password) 
-    {
+    public boolean validarPassword(String password)
+{
         String regex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$";
         return Pattern.compile(regex).matcher(password).matches();
     }
 
-    // 2. Método para Registrar
-    public boolean registrarUsuario(String nombre, String password) 
-    {
+    public boolean registrarUsuario(String nombre, String password)
+{
         if (!validarPassword(password)) {
             System.out.println("---Contraseña inválida---");
             System.out.println("- La contraseña debe tener:");
@@ -54,52 +49,47 @@ public class ManageDB {
             pstmt.setString(1, nombre);
             pstmt.setString(2, password);
             return pstmt.executeUpdate() > 0;
-            
+
         } catch (SQLException e) {
             System.out.println("Error al registrar: " + e.getMessage());
             return false;
         }
     }
 
-    // 3. Método para Login (Devuelve el ID del usuario si es correcto, o -1 si falla)
-    public Usuario login(String nombre, String password) 
-    {
-        // Buscamos el ID y el nombre (por si acaso)
+    public Usuario login(String nombre, String password)
+{
         String sql = "SELECT id_usuario, nombre FROM usuarios WHERE nombre = ? AND password = ?";
-        
+
         try (Connection conn = ConexionBD.conectar();
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
+
             pstmt.setString(1, nombre);
             pstmt.setString(2, password);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                // SI EXISTE: Creamos el objeto y lo devolvemos
                 int id = rs.getInt("id_usuario");
                 String nombreDb = rs.getString("nombre");
-                
-                return new Usuario(id, nombreDb, password); 
+
+                return new Usuario(id, nombreDb, password);
             }
         } catch (SQLException e) {
-            System.out.println("❌ Error: " + e.getMessage());
+            System.out.println("Error: " + e.getMessage());
         }
-        
-        // SI NO EXISTE O HAY ERROR: Devolvemos null
-        return null; 
+
+        return null;
     }
 
-    public boolean registrarMovimiento(Movimiento m) 
-    {
-        // SQL sin columna 'fecha', porque Supabase usará el valor por defecto (CURRENT_DATE)
+    public boolean registrarMovimiento(Movimiento m)
+{
         String sql = "INSERT INTO movimientos (id_usuario, concepto, cantidad, id_categoria) VALUES (?, ?, ?, ?)";
-        
+
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, m.getIdUsuario());
             pstmt.setString(2, m.getConcepto());
             pstmt.setDouble(3, m.getCantidad());
             pstmt.setInt(4, m.getId_categoria());
-            
+
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.out.println("Error al insertar movimiento: " + e.getMessage());
@@ -107,9 +97,8 @@ public class ManageDB {
         }
     }
 
-    //Listar movimientos
-    public java.util.List<Movimiento> obtenerMovimientosPorUsuario(int idUsuario) 
-    {
+    public java.util.List<Movimiento> obtenerMovimientosPorUsuario(int idUsuario)
+{
         java.util.List<Movimiento> lista = new java.util.ArrayList<>();
         String sql = "SELECT * FROM movimientos WHERE id_usuario = ? ORDER BY id_movimiento DESC";
 
@@ -118,7 +107,6 @@ public class ManageDB {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                // Creamos el objeto con el constructor de 5 parámetros que hicimos antes
                 Movimiento m = new Movimiento(
                     rs.getInt("id_movimiento"),
                     rs.getInt("id_usuario"),
@@ -138,9 +126,8 @@ public class ManageDB {
         return lista;
     }
 
-    //Obtener valance total
-    public double obtenerSaldoTotal(int idUsuario) 
-    {
+    public double obtenerSaldoTotal(int idUsuario)
+{
         String sql = "SELECT SUM(cantidad) as saldo FROM movimientos WHERE id_usuario = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, idUsuario);
@@ -154,9 +141,7 @@ public class ManageDB {
         return 0.0;
     }
 
-    //Eliminar movimiento
     public boolean eliminarMovimiento(int idMovimiento, int idUsuario) {
-        // Importante: Filtramos por idUsuario por seguridad, para que nadie borre gastos ajenos
         String sql = "DELETE FROM movimientos WHERE id_movimiento = ? AND id_usuario = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, idMovimiento);

@@ -7,7 +7,6 @@ public class Movimiento {
     private double cantidad;
     private int id_categoria;
 
-    // CONSTRUCTOR: Para crear nuevos movimientos desde la App
     public Movimiento(int idUsuario, String concepto, double cantidad, int categoria) {
         this.idUsuario = idUsuario;
         this.concepto = concepto;
@@ -15,7 +14,6 @@ public class Movimiento {
         this.id_categoria = categoria;
     }
 
-    // CONSTRUCTOR: Para cuando listamos datos (por si necesitas el ID que dio la BD)
     public Movimiento(int id_movimiento, int idUsuario, String concepto, double cantidad, int categoria) {
         this.id_movimiento = id_movimiento;
         this.idUsuario = idUsuario;
@@ -24,23 +22,25 @@ public class Movimiento {
         this.id_categoria = categoria;
     }
 
-    // GETTERS: Imprescindibles para que ManageDB lea los datos
-    public int getIdUsuario() 
-    { 
-        return idUsuario; 
+    public int getIdUsuario()
+{
+        return idUsuario;
     }
-    public String getConcepto() 
-    { return concepto; }
-    public double getCantidad() { 
-        return cantidad; 
+    public String getConcepto()
+{
+        return concepto;
     }
-    public int getId_categoria() 
-    { 
-        return id_categoria; 
+    public double getCantidad()
+{
+        return cantidad;
     }
-    public int getId() 
-    { 
-        return id_movimiento; 
+    public int getId_categoria()
+{
+        return id_categoria;
+    }
+    public int getId()
+{
+        return id_movimiento;
     }
 
     @Override
